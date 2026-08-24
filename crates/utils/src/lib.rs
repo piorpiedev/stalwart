@@ -21,6 +21,7 @@ pub mod tls;
 pub mod topological;
 pub mod url_params;
 
+use ahash::AHashSet;
 use compact_str::ToCompactString;
 use futures::StreamExt;
 pub use reqwest::Client;
@@ -28,6 +29,7 @@ use reqwest::Response;
 pub use reqwest::header::HeaderMap;
 use std::borrow::Cow;
 use std::fmt::Write;
+use std::sync::LazyLock;
 
 pub trait HttpLimitResponse: Sync + Send {
     fn bytes_with_limit(
@@ -425,6 +427,16 @@ pub fn sanitize_domain(domain: &str) -> Option<String> {
     }
 }
 
+static CUSTOM_TLDS: LazyLock<AHashSet<String>> = LazyLock::new(|| {
+    std::env::var("STALWART_CUSTOM_TLDS")
+        .unwrap_or_default()
+        .replace(", ", ",")
+        .split(",")
+        .map(|s| s.trim().trim_start_matches(".").to_ascii_lowercase())
+        .filter(|s| !s.is_empty())
+        .collect()
+});
+
 pub fn is_valid_domain(domain: &str) -> bool {
     const RESERVED_TLDS: &[&str] = &[
         "test",
@@ -440,9 +452,10 @@ pub fn is_valid_domain(domain: &str) -> bool {
     ];
     (domain.contains('.') && psl::suffix(domain.as_bytes()).is_some_and(|s| s.typ().is_some()))
         || RESERVED_TLDS.contains(&domain)
+        || CUSTOM_TLDS.contains(domain)
         || domain
             .rsplit_once('.')
-            .is_some_and(|(_, tld)| RESERVED_TLDS.contains(&tld))
+            .is_some_and(|(_, tld)| RESERVED_TLDS.contains(&tld) || CUSTOM_TLDS.contains(tld))
 }
 
 #[cfg(test)]
