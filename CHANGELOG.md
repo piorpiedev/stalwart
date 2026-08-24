@@ -9,6 +9,7 @@ If you are upgrading from v0.16.x, replace the binary (or run `docker pull`). If
 ## Added
 - WebUI: `oauthClientId` setting in `Application`, which allows the WebUI to use a different OAuth client than the default.
 - Sieve: `env.spam.score` and `env.spam.is_spam` variables, which expose the spam filter result to system scripts running at the `DATA` stage.
+- CalDAV: `vCardVersion` setting in `AddressBook`, which allows the default vCard version to be specified when the client does not request a specific version.
 
 ## Changed
 - MySQL & MariaDB: Key columns are now `VARBINARY(255)` with a full-length primary key instead of `TINYBLOB`. Note: Existing deployments should run, once per table, for each of the tables `a`, `d`, `e`, `f`, `g`, `h`, `j`, `k`, `l`, `m`, `n`, `o`, `p`, `q`, `r`, `s`, `t`, `u`, `w`, `x` and `y` the command `ALTER TABLE a MODIFY k VARBINARY(255) NOT NULL;`.
